@@ -3,6 +3,7 @@ This a simple example of feed forward and back propagation network using python
 '''
 import numpy as np
 import matplotlib.pyplot as plt
+
 np.random.seed(42)
 
 
@@ -23,11 +24,13 @@ class SigmoidLayer:
         pass
 
     def forward(self, inData, weight):
-        return 1.0 / (1.0 + np.exp(-inData))
+        outData = 1.0 / (1.0 + np.exp(-inData))
+        return outData
 
     def backward(self, delta, weight):
         # derivative calculation
-        return self.forward(delta, weight) * (1.0 - self.forward(delta, weight))
+        outDelta = delta
+        return outDelta * (1.0 - outDelta)
 
 
 class TanhLayer:
@@ -50,22 +53,21 @@ class Perceptron:
         return np.dot(inData, weight)
 
     def backward(self, delta, weight):
-        # derivative calculation
         return np.dot(delta, weight.T)
+
 
 class SumOfSquaredCostFunction:
     def __init__(self):
-        self.erros = []
+        pass
 
     def forward(self, data, actual):
-        sqErr = np.sum(((data - actual)**2)**.5)
+        sqErr = np.sum(((data - actual) ** 2) ** .5)
         # sqErr = abs(data - actual)
-        self.erros.append(sqErr)
         return sqErr
 
     def backward(self, output, actual):
-        # derivative calculation
-        return  -1 * (output - actual)
+        # derivative
+        return -1 * (output - actual)
 
 
 class Layer:
@@ -87,6 +89,7 @@ class Layer:
     def backward(self, indelta):
         indelta = indelta * self.nonLinear.backward(self.outData, self.weight)
         outdelta = self.linear.backward(indelta, self.weight)
+        # update weight
         update_data = np.atleast_2d(self.inData)
         update_delta = np.atleast_2d(indelta)
         self.weight = self.weight + self.learningRate * np.dot(update_data.T, update_delta)
@@ -96,7 +99,7 @@ class Layer:
 class NeuralNetwork:
     def __init__(self, layers):
         self.layers = []
-        activation = TanhLayer
+        activation = SigmoidLayer
         networkSize = []
         for inLayer, outLayer in zip(layers, layers[1:]):
             networkSize.append([inLayer + 1, outLayer + 1])  # for bias
@@ -105,8 +108,11 @@ class NeuralNetwork:
             r = 2 * np.random.random(layerSize) - 1
             layer = Layer(r, .2, Perceptron, activation)
             self.layers.append(layer)
+        # for layer in self.layers:
+        #     print layer.weight
+        # print '______________________________________________'
 
-    def fit(self, X, y, epochs=2000, printSize=10):
+    def fit(self, X, y, epochs=200000, printSize=10000):
         ones = np.atleast_2d(np.ones(X.shape[0]))
         X = np.concatenate((ones.T, X), axis=1)
         axplts = getPlot(1, 1)[0]
@@ -153,17 +159,17 @@ def main():
     # for e in X:
     #     print(e, model.predict(e))
 
-    # nn = NeuralNetwork([2, 2, 2])
-    # X = np.array([0.05, 0.10])
-    # y = np.array([0.01, .99])
-    # nn.fit(X, y)
-    # nn.predict(X)
-
-    nn = NeuralNetwork([2, 2, 1])
-    X = np.array([[0, 0], [0, 1], [1, 0], [1, 1]])
-    y = np.array([0, 1, 1, 0])
+    nn = NeuralNetwork([2, 2, 2])
+    X = np.array([[0.05, 0.10]])
+    y = np.array([[0.01, .99]])
     nn.fit(X, y)
-    print nn.predict(X)
+    nn.predict(X)
+
+    # nn = NeuralNetwork([2, 5, 1])
+    # X = np.array([[0, 0], [0, 1], [1, 0], [1, 1]])
+    # y = np.array([0, 1, 1, 0])
+    # nn.fit(X, y)
+    # print nn.predict(X)
 
 
 if __name__ == '__main__':
